@@ -38,7 +38,6 @@ class ElasticSearchAsyncWriteJournalSpec extends JournalSpec(
     .put("index.number_of_shards", 1)
     .put("index.number_of_replicas", 0).build())
 
-
   override def writeMessages(fromSnr: Int, toSnr: Int, pid: String, sender: ActorRef, writerUuid: String): Unit = {
     super.writeMessages(fromSnr, toSnr, pid, sender, writerUuid)
     esClient.admin.indices().prepareRefresh("akkajournal").execute().actionGet()

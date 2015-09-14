@@ -55,7 +55,7 @@ class ElasticSearchAsyncWriteJournal extends AsyncWriteJournal with DiagnosticAc
     val responses: Seq[Future[BulkResponse]] = messages.map(write => {
       try {
         val indexRequests = write.payload.map(pr => {
-          index into journalIndex / journalType fields(
+          index into journalIndex / journalType id s"${pr.persistenceId}-${pr.sequenceNr}" fields(
             "persistenceId" -> pr.persistenceId,
             "sequenceNumber" -> pr.sequenceNr,
             "message" -> serializer.serialize(pr).get
@@ -127,34 +127,35 @@ class ElasticSearchAsyncWriteJournal extends AsyncWriteJournal with DiagnosticAc
 
   override def asyncReplayMessages(persistenceId: String, fromSequenceNr: Long, toSequenceNr: Long, max: Long)(replayCallback: (PersistentRepr) => Unit): Future[Unit] = {
     log.debug("Replaying messages for {} from {} to {} count {}", persistenceId, fromSequenceNr, toSequenceNr, max)
-    val query = search in journalIndex / journalType query {
-      filteredQuery filter {
-        and(
-          termsFilter("persistenceId", persistenceId),
-          rangeFilter("sequenceNumber") gte fromSequenceNr.toString lte toSequenceNr.toString
-        )
-      }
-    } sort (field sort "sequenceNumber") limit max.toInt
-    val replays: Future[SearchResponse] = esClient.execute(query)
+    val normalizedEnd = toSequenceNr - fromSequenceNr >= max match {
+      case true => fromSequenceNr + max
+      case false => toSequenceNr + 1
+    }
+    log.debug("Params {} {} {} {}", fromSequenceNr, toSequenceNr, max, normalizedEnd)
+    val ids = (fromSequenceNr until normalizedEnd).map(seqNr => s"$persistenceId-$seqNr")
+    if(ids.isEmpty) Future.successful()
+    else {
+      log.debug("Multigetting {}", ids)
 
-    val promise = Promise[Unit]
+      val replays = esClient execute multiget(ids.map(get id _ from journalIndex / journalType))
+      val promise = Promise[Unit]
 
-    replays.onComplete({
-      case Failure(ex) => promise.failure(ex)
-      case Success(searchResponse) =>
-        log.debug("Starting replay of {} messages...", searchResponse.hits.length)
-        searchResponse.hits.foreach(hit => {
-          log.debug("Replaying {} {}", hit.id, hit.sourceAsString)
-          val source = hit.sourceAsMap
-          val messageBase64  = source("message").asInstanceOf[String]
-          val msg = serializer.deserialize[PersistentRepr](Base64.decode(messageBase64), classOf[PersistentRepr]).get
-          log.debug("Replaying {}", msg)
-          replayCallback(msg)
-        })
-        log.debug("Completing future")
-        promise.success()
-    })
+      replays.onComplete({
+        case Failure(ex) => promise.failure(ex)
+        case Success(multiGetResponse) =>
+          log.debug("Starting replay of {} messages...", multiGetResponse.getResponses.length)
+          multiGetResponse.getResponses.filter(_.getResponse.isExists).foreach(hit => {
+            val source = hit.getResponse.getSourceAsMap
+            val messageBase64 = source.get("message").asInstanceOf[String]
+            val msg = serializer.deserialize[PersistentRepr](Base64.decode(messageBase64), classOf[PersistentRepr]).get
+            log.debug("Replaying {}", msg)
+            replayCallback(msg)
+          })
+          log.debug("Completing future")
+          promise.success()
+      })
 
-    promise.future
+      promise.future
+    }
   }
 }
