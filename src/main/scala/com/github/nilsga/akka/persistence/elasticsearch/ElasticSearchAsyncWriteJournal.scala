@@ -9,7 +9,6 @@ import com.sksamuel.elastic4s._
 import com.sksamuel.elastic4s.streams.ReactiveElastic._
 import com.sksamuel.elastic4s.streams.RequestBuilder
 import org.elasticsearch.action.bulk.BulkResponse
-import org.elasticsearch.action.search.SearchResponse
 import org.elasticsearch.common.Base64
 import org.elasticsearch.common.settings.ImmutableSettings
 import org.elasticsearch.search.aggregations.metrics.max.Max

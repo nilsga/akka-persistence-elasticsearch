@@ -29,7 +29,6 @@ class ElasticSearchAsyncWriteJournalSpec extends JournalSpec(
     """
   )) {
   val dataDir = Paths.get(System.getProperty("java.io.tmpdir")).resolve(UUID.randomUUID().toString)
-  println("Using " + dataDir + " as home")
   dataDir.toFile.deleteOnExit()
   dataDir.toFile.mkdirs()
   val esClient = ElasticClient.local(ImmutableSettings.settingsBuilder()
