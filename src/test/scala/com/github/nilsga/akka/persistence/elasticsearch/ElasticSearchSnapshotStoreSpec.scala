@@ -3,18 +3,21 @@ package com.github.nilsga.akka.persistence.elasticsearch
 import java.nio.file.Paths
 import java.util.UUID
 
-import akka.actor.ActorRef
-import akka.persistence.journal.JournalSpec
+import akka.persistence.SnapshotMetadata
+import akka.persistence.snapshot.SnapshotStoreSpec
 import com.sksamuel.elastic4s.ElasticClient
-import com.typesafe.config._
+import com.typesafe.config.ConfigFactory
 import org.elasticsearch.common.settings.ImmutableSettings
+import com.sksamuel.elastic4s.ElasticDsl._
 
-class ElasticSearchAsyncWriteJournalSpec extends JournalSpec(
+import scala.collection.immutable.Seq
+
+class ElasticSearchSnapshotStoreSpec extends SnapshotStoreSpec(
   config = ConfigFactory.parseString(
     s"""
       akka {
         test.single-expect-default = 10s
-        persistence.journal.plugin = "elasticsearch-journal"
+        persistence.snapshot-store.plugin = "elasticsearch-snapshot-store"
         loggers = ["akka.event.slf4j.Slf4jLogger"]
         debug.receive = on
         loglevel = "DEBUG"
@@ -26,11 +29,12 @@ class ElasticSearchAsyncWriteJournalSpec extends JournalSpec(
           index = "akkajournal"
        }
 
-       elasticsearch-journal {
-          class = "com.github.nilsga.akka.persistence.elasticsearch.ElasticSearchAsyncWriteJournal"
+       elasticsearch-snapshot-store {
+          class = "com.github.nilsga.akka.persistence.elasticsearch.ElasticSearchSnapshotStore"
        }
     """
   )) {
+
   val dataDir = Paths.get(System.getProperty("java.io.tmpdir")).resolve(UUID.randomUUID().toString)
   dataDir.toFile.deleteOnExit()
   dataDir.toFile.mkdirs()
@@ -40,9 +44,10 @@ class ElasticSearchAsyncWriteJournalSpec extends JournalSpec(
     .put("index.number_of_shards", 1)
     .put("index.number_of_replicas", 0).build())
 
-  override def writeMessages(fromSnr: Int, toSnr: Int, pid: String, sender: ActorRef, writerUuid: String): Unit = {
-    super.writeMessages(fromSnr, toSnr, pid, sender, writerUuid)
-    esClient.admin.indices().prepareRefresh("akkajournal").execute().actionGet()
+  override def writeSnapshots(): Seq[SnapshotMetadata] = {
+    val snaps = super.writeSnapshots()
+    esClient.execute(refresh index "akkajournal").await
+    snaps
   }
 
   protected override def afterAll(): Unit = {

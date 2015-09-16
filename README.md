@@ -8,14 +8,24 @@ Akka persistence distributed journal based on Elasticsearch.
 
 ```
 akka.persistence.journal.plugin = "elasticsearch-journal"
+akka.persistence.snapshot-store.plugin = "elasticsearch-snapshot-store"
 
 elasticsearch-journal {
   class = "com.github.nilsga.akka.persistence.elasticsearch.ElasticSearchAsyncWriteJournal"
+}
+
+elasticsearch-snapshot-store {
+  class = "com.github.nilsga.akka.persistence.elasticsearch.ElasticSearchSnapshotStore"
+}
+
+elasticsearch-persistence {
   url = "elasticsearch://localhost:9300"
   cluster = "mycluster"
   index = "akkajournal"
 }
 ```
+
+Note: You don't need both the journal and the snapshot store plugin. Just add the plugin that your application is using.
 
 * `elasticsearch-journal.url` is a remote Elasticsearch url as specified for the library [elastic4s](https://github.com/sksamuel/elastic4s#client)
 * `elasticsearch-journal.cluster` is the name of the ES cluster to join
