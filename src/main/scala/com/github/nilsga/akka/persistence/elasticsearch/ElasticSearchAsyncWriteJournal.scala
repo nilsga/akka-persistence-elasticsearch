@@ -1,17 +1,15 @@
 package com.github.nilsga.akka.persistence.elasticsearch
 
 import akka.actor.DiagnosticActorLogging
+import akka.persistence.AtomicWrite
 import akka.persistence.journal.AsyncWriteJournal
-import akka.persistence.{AtomicWrite, PersistentRepr}
 import akka.serialization.SerializationExtension
 import com.sksamuel.elastic4s.ElasticDsl._
 import com.sksamuel.elastic4s._
 import com.sksamuel.elastic4s.streams.ReactiveElastic._
 import com.sksamuel.elastic4s.streams.RequestBuilder
 import org.elasticsearch.action.bulk.BulkResponse
-import org.elasticsearch.common.Base64
 import org.elasticsearch.common.settings.ImmutableSettings
-import org.elasticsearch.search.aggregations.metrics.max.Max
 
 import scala.collection.immutable.Seq
 import scala.concurrent.{Future, Promise}
@@ -44,7 +42,6 @@ class ElasticSearchAsyncWriteJournal extends AsyncWriteJournal with ElasticSearc
     super.preStart()
     val journalIndexExists = esClient.admin.indices().prepareExists(journalIndex).execute().actionGet().isExists
     if(!journalIndexExists) {
-      val mapping = JournalMapping().toString
       esClient.admin.indices().prepareCreate(journalIndex).addMapping(journalType, JournalMapping().mapping).execute().actionGet()
     }
   }
@@ -67,9 +64,9 @@ class ElasticSearchAsyncWriteJournal extends AsyncWriteJournal with ElasticSearc
       }
     })
 
-    Future.sequence(responses.map(bf => bf.map(br => br.hasFailures match {
+    Future.sequence(responses.map(_.map(bulkResponse => bulkResponse.hasFailures match {
       case false => Success()
-      case true => Failure(new RuntimeException(br.buildFailureMessage()))
+      case true => Failure(new RuntimeException(bulkResponse.buildFailureMessage()))
     }).recover({
       case NonFatal(ex) => Failure(ex)
     })))
@@ -84,7 +81,7 @@ class ElasticSearchAsyncWriteJournal extends AsyncWriteJournal with ElasticSearc
           rangeFilter("sequenceNumber").lte(toSequenceNr.toString)
         )
       }
-    } scroll "1m")
+    } scroll "10s")
 
     val promise = Promise[Unit]
 
