@@ -1,6 +1,5 @@
 package com.github.nilsga.akka.persistence.elasticsearch
 
-import akka.actor.DiagnosticActorLogging
 import akka.persistence.AtomicWrite
 import akka.persistence.journal.AsyncWriteJournal
 import akka.serialization.SerializationExtension
@@ -9,45 +8,32 @@ import com.sksamuel.elastic4s._
 import com.sksamuel.elastic4s.streams.ReactiveElastic._
 import com.sksamuel.elastic4s.streams.RequestBuilder
 import org.elasticsearch.action.bulk.BulkResponse
-import org.elasticsearch.common.settings.ImmutableSettings
 
 import scala.collection.immutable.Seq
-import scala.concurrent.{Future, Promise}
+import scala.concurrent.duration._
+import scala.concurrent.{Await, Future, Promise}
 import scala.util.control.NonFatal
 import scala.util.{Failure, Success, Try}
 
 
-class ElasticSearchAsyncWriteJournal extends AsyncWriteJournal with ElasticSearchAsyncRecovery with DiagnosticActorLogging {
+class ElasticSearchAsyncWriteJournal extends AsyncWriteJournal with ElasticSearchAsyncRecovery {
 
   import context._
 
-  val pluginConfig = context.system.settings.config.getConfig("elasticsearch-journal")
+  implicit val extension = ElasticSearchPersistenceExtension(context.system)
 
-  val esCluster = pluginConfig.getString("cluster")
-  val esSettings = ImmutableSettings.settingsBuilder().put("cluster.name", esCluster).build()
-  val esClient = pluginConfig.hasPath("local") match {
-    case true =>
-      ElasticClient.local(ImmutableSettings.settingsBuilder().put("node.data", false).put("node.master", false).build())
-    case false =>
-      val uri = pluginConfig.getString("url")
-      ElasticClient.remote(esSettings, ElasticsearchClientUri(uri))
-  }
-  val journalIndex = pluginConfig.getString("index")
+  val journalIndex = extension.config.index
+  val journalType = extension.config.journalType
   val serializer = SerializationExtension(context.system)
-  val journalType = "representation"
-
+  val esClient = extension.client
 
   @throws[Exception](classOf[Exception])
   override def preStart(): Unit = {
     super.preStart()
-    val journalIndexExists = esClient.admin.indices().prepareExists(journalIndex).execute().actionGet().isExists
-    if(!journalIndexExists) {
-      esClient.admin.indices().prepareCreate(journalIndex).addMapping(journalType, JournalMapping().mapping).execute().actionGet()
-    }
+    Await.result(ElasticSearchPersistenceMappings.ensureJournalMappingExists(), 5 seconds)
   }
 
   override def asyncWriteMessages(messages: Seq[AtomicWrite]): Future[Seq[Try[Unit]]] = {
-    log.debug("Writing {} messages to journal", messages.length)
     val responses: Seq[Future[BulkResponse]] = messages.map(write => {
       try {
         val indexRequests = write.payload.map(pr => {
@@ -73,8 +59,7 @@ class ElasticSearchAsyncWriteJournal extends AsyncWriteJournal with ElasticSearc
   }
 
   override def asyncDeleteMessagesTo(persistenceId: String, toSequenceNr: Long): Future[Unit] = {
-    log.debug("Deleting messages for {} to seqnr {} ", persistenceId, toSequenceNr)
-    val messagesToDelete = esClient.publisher(search in journalIndex / journalType sourceInclude ("persistenceId", "sequenceNumber") query {
+    val messagesToDelete = esClient.publisher(search in journalIndex / journalType sourceInclude ("_id") query {
       filteredQuery filter {
         and(
           termFilter("persistenceId", persistenceId),
@@ -87,7 +72,6 @@ class ElasticSearchAsyncWriteJournal extends AsyncWriteJournal with ElasticSearc
 
     val reqBuilder = new RequestBuilder[RichSearchHit] {
       override def request(t: RichSearchHit): BulkCompatibleDefinition = {
-        log.debug("Deleting message {} {}", t.id, t.sourceAsString)
         delete id t.id from journalIndex / journalType
       }
     }
