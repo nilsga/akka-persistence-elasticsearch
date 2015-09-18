@@ -27,9 +27,9 @@ elasticsearch-persistence {
 
 Note: You don't need both the journal and the snapshot store plugin. Just add the plugin that your application is using.
 
-* `elasticsearch-journal.url` is a remote Elasticsearch url as specified for the library [elastic4s](https://github.com/sksamuel/elastic4s#client)
-* `elasticsearch-journal.cluster` is the name of the ES cluster to join
-* `elasticsearch-journal.index` is the name of the index to use for the journal
+* `elasticsearch-persistence.url` is a remote Elasticsearch url as specified for the library [elastic4s](https://github.com/sksamuel/elastic4s#client)
+* `elasticsearch-persistence.cluster` is the name of the ES cluster to join
+* `elasticsearch-persistence.index` is the name of the index to use for the journal
 
 ## Why would I use a search engine as a journal?
 
