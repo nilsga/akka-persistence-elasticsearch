@@ -3,6 +3,7 @@ organization := "com.github.nilsga"
 name := "akka-persistence-elasticsearch"
 
 version := "1.0-SNAPSHOT"
+
 scalaVersion := "2.11.6"
 
 val akkaVersion = "2.4.0-RC3"

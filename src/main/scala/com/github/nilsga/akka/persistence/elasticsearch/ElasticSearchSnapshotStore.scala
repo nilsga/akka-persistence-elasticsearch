@@ -32,24 +32,26 @@ class ElasticSearchSnapshotStore extends SnapshotStore {
   }
 
   override def loadAsync(persistenceId: String, criteria: SnapshotSelectionCriteria): Future[Option[SelectedSnapshot]] = {
-    val query = search in persistenceIndex / snapshotType query {
-      filteredQuery filter {
-        and(
-          termFilter("persistenceId", persistenceId),
-          rangeFilter("sequenceNumber") gte criteria.minSequenceNr.toString lte criteria.maxSequenceNr.toString,
-          rangeFilter("timestamp") gte criteria.minTimestamp.toString lte criteria.maxTimestamp.toString
-        )
-      }
-    } sourceInclude("_id") sort(field sort "timestamp" order SortOrder.DESC)
+    esClient.execute(refresh index persistenceIndex).flatMap(_ => {
+      val query = search in persistenceIndex / snapshotType query {
+        filteredQuery filter {
+          and(
+            termFilter("persistenceId", persistenceId),
+            rangeFilter("sequenceNumber") gte criteria.minSequenceNr.toString lte criteria.maxSequenceNr.toString,
+            rangeFilter("timestamp") gte criteria.minTimestamp.toString lte criteria.maxTimestamp.toString
+          )
+        }
+      } sourceInclude ("_id") sort (field sort "timestamp" order SortOrder.DESC)
 
-    esClient.execute(query).flatMap(searchResponse => {
-      val gets = searchResponse.hits.map(get id _.id from persistenceIndex / snapshotType)
-      esClient.execute(multiget(gets))
-    }).map(multiGetResponse => {
-      val responses = JavaConversions.asScalaIterator(multiGetResponse.iterator()).map(_.getResponse)
-      responses.collectFirst {
-        case r if r.isExists => toSelectedSnapshot(r)
-      }
+      esClient.execute(query).flatMap(searchResponse => {
+        val gets = searchResponse.hits.map(get id _.id from persistenceIndex / snapshotType)
+        esClient.execute(multiget(gets))
+      }).map(multiGetResponse => {
+        val responses = JavaConversions.asScalaIterator(multiGetResponse.iterator()).map(_.getResponse)
+        responses.collectFirst {
+          case r if r.isExists => toSelectedSnapshot(r)
+        }
+      })
     })
   }
 

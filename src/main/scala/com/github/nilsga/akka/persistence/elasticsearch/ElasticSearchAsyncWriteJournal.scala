@@ -63,7 +63,7 @@ class ElasticSearchAsyncWriteJournal extends AsyncWriteJournal with ElasticSearc
       filteredQuery filter {
         and(
           termFilter("persistenceId", persistenceId),
-          rangeFilter("sequenceNumber").lte(toSequenceNr.toString)
+          rangeFilter("sequenceNumber") lte toSequenceNr.toString
         )
       }
     } scroll "10s")
