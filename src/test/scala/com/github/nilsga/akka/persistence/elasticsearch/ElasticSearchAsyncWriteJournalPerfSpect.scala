@@ -31,30 +31,13 @@ class ElasticSearchAsyncWriteJournalPerfSpect extends JournalPerfSpec(
           class = "com.github.nilsga.akka.persistence.elasticsearch.ElasticSearchAsyncWriteJournal"
        }
     """
-    )) {
-
-    val dataDir = Paths.get(System.getProperty("java.io.tmpdir")).resolve(UUID.randomUUID().toString)
-    dataDir.toFile.deleteOnExit()
-    dataDir.toFile.mkdirs()
-    val esClient = ElasticClient.local(ImmutableSettings.settingsBuilder()
-      .put("path.home", dataDir.toFile.getAbsolutePath)
-      .put("path.repo", dataDir.toFile.getAbsolutePath)
-      .put("threadpool.bulk.queue_size", 10000)
-      .put("cluster.routing.allocation.disk.threshold_enabled", false)
-      .put("index.number_of_shards", 1)
-      .put("index.number_of_replicas", 0).build())
-
+    )) with ElasticSearchSetup {
 
   override def awaitDurationMillis: Long = 20.seconds.toMillis
 
   override def writeMessages(fromSnr: Int, toSnr: Int, pid: String, sender: ActorRef, writerUuid: String): Unit = {
     super.writeMessages(fromSnr, toSnr, pid, sender, writerUuid)
     esClient.admin.indices().prepareRefresh("akkajournal").execute().actionGet()
-  }
-
-  protected override def afterAll(): Unit = {
-    super.afterAll()
-    esClient.close()
   }
 
 }

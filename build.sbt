@@ -12,7 +12,7 @@ licenses += ("MIT", url("http://opensource.org/licenses/MIT"))
 
 parallelExecution in Test := false
 
-fork := false
+fork := true
 
 credentials += Credentials(
   "Artifactory Realm",
