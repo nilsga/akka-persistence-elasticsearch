@@ -40,6 +40,7 @@ class ElasticSearchAsyncWriteJournalPerfSpect extends JournalPerfSpec(
       .put("path.home", dataDir.toFile.getAbsolutePath)
       .put("path.repo", dataDir.toFile.getAbsolutePath)
       .put("threadpool.bulk.queue_size", 10000)
+      .put("cluster.routing.allocation.disk.threshold_enabled", false)
       .put("index.number_of_shards", 1)
       .put("index.number_of_replicas", 0).build())
 

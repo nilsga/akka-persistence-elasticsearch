@@ -12,6 +12,8 @@ licenses += ("MIT", url("http://opensource.org/licenses/MIT"))
 
 parallelExecution in Test := false
 
+fork := false
+
 credentials += Credentials(
   "Artifactory Realm",
   "oss.jfrog.org",
