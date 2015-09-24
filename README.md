@@ -1,6 +1,6 @@
 # Elasticsearch distributed journal for Akka persistence
 
- ![Travis build status](https://travis-ci.org/nilsga/akka-persistence-elasticsearch.svg)
+ ![Travis build status](https://travis-ci.org/nilsga/akka-persistence-elasticsearch.svg?branch=master)
 
 Akka persistence distributed journal based on Elasticsearch.
 
