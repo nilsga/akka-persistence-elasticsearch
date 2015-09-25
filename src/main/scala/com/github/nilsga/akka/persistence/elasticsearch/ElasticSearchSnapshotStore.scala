@@ -13,8 +13,7 @@ import org.elasticsearch.common.Base64
 import org.elasticsearch.search.sort.SortOrder
 
 import scala.collection.JavaConversions
-import scala.concurrent.duration._
-import scala.concurrent.{Await, Future, Promise}
+import scala.concurrent.{Future, Promise}
 
 class ElasticSearchSnapshotStore extends SnapshotStore {
 
@@ -24,12 +23,6 @@ class ElasticSearchSnapshotStore extends SnapshotStore {
   val esClient = extension.client
   val persistenceIndex = extension.config.index
   val snapshotType = extension.config.snapshotType
-
-  @throws[Exception](classOf[Exception])
-  override def preStart(): Unit = {
-    super.preStart()
-    Await.result(ElasticSearchPersistenceMappings.ensureSnapshotMappingExists(), 5 seconds)
-  }
 
   override def loadAsync(persistenceId: String, criteria: SnapshotSelectionCriteria): Future[Option[SelectedSnapshot]] = {
     esClient.execute(refresh index persistenceIndex).flatMap(_ => {
