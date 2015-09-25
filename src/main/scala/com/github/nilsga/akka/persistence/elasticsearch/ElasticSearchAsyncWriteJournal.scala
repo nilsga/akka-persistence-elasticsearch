@@ -27,12 +27,6 @@ class ElasticSearchAsyncWriteJournal extends AsyncWriteJournal with ElasticSearc
   val serializer = SerializationExtension(context.system)
   val esClient = extension.client
 
-  @throws[Exception](classOf[Exception])
-  override def preStart(): Unit = {
-    super.preStart()
-    Await.result(ElasticSearchPersistenceMappings.ensureJournalMappingExists(), 5 seconds)
-  }
-
   override def asyncWriteMessages(messages: Seq[AtomicWrite]): Future[Seq[Try[Unit]]] = {
     val responses: Seq[Future[BulkResponse]] = messages.map(write => {
       try {
