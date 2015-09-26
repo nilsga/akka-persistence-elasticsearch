@@ -2,7 +2,7 @@ organization := "com.github.nilsga"
 
 name := "akka-persistence-elasticsearch"
 
-version := "1.0-SNAPSHOT"
+version := "1.0"
 
 scalaVersion := "2.11.6"
 
