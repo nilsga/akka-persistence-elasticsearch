@@ -16,11 +16,11 @@ import scala.util.control.NonFatal
 import scala.util.{Failure, Success, Try}
 
 
-class ElasticSearchAsyncWriteJournal extends AsyncWriteJournal with ElasticSearchAsyncRecovery {
+class ElasticsearchAsyncWriteJournal extends AsyncWriteJournal with ElasticsearchAsyncRecovery {
 
   import context._
 
-  implicit val extension = ElasticSearchPersistenceExtension(context.system)
+  implicit val extension = ElasticsearchPersistenceExtension(context.system)
 
   val journalIndex = extension.config.index
   val journalType = extension.config.journalType

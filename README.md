@@ -19,7 +19,7 @@ elasticsearch-snapshot-store {
 }
 
 elasticsearch-persistence {
-  url = "elasticsearch://localhost:9300"
+  nodes = ["localhost"]
   cluster = "mycluster"
   index = "akkajournal"
 }
@@ -27,7 +27,7 @@ elasticsearch-persistence {
 
 Note: You don't need both the journal and the snapshot store plugin. Just add the plugin that your application is using.
 
-* `elasticsearch-persistence.url` is a remote Elasticsearch url as specified for the library [elastic4s](https://github.com/sksamuel/elastic4s#client)
+* `elasticsearch-persistence.nodes` is an array of addresses to the ES master nodes of the cluster)
 * `elasticsearch-persistence.cluster` is the name of the ES cluster to join
 * `elasticsearch-persistence.index` is the name of the index to use for the journal
 

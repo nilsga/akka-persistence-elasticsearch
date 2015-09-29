@@ -7,9 +7,9 @@ import com.sksamuel.elastic4s.mappings.TypedFieldDefinition
 
 import scala.concurrent.Future
 
-object ElasticSearchPersistenceMappings {
+object ElasticsearchPersistenceMappings {
 
-  private def ensureIndexAndMappingExists(mappingType: String, mapping: Seq[TypedFieldDefinition])(implicit extension : ElasticSearchPersistenceExtensionImpl) : Future[Unit] = {
+  private def ensureIndexAndMappingExists(mappingType: String, mapping: Seq[TypedFieldDefinition])(implicit extension : ElasticsearchPersistenceExtensionImpl) : Future[Unit] = {
     import extension._
     val client = extension.client
     val persistenceIndex = extension.config.index
@@ -23,7 +23,7 @@ object ElasticSearchPersistenceMappings {
     })
   }
 
-  def ensureJournalMappingExists()(implicit extension : ElasticSearchPersistenceExtensionImpl) : Future[Unit] = {
+  def ensureJournalMappingExists()(implicit extension : ElasticsearchPersistenceExtensionImpl) : Future[Unit] = {
     ensureIndexAndMappingExists(extension.config.journalType, Seq(
       field name "persistenceId" withType StringType index NotAnalyzed,
       field name "sequenceNumber" withType LongType,
@@ -31,7 +31,7 @@ object ElasticSearchPersistenceMappings {
     ))
   }
 
-  def ensureSnapshotMappingExists()(implicit extension : ElasticSearchPersistenceExtensionImpl) : Future[Unit] = {
+  def ensureSnapshotMappingExists()(implicit extension : ElasticsearchPersistenceExtensionImpl) : Future[Unit] = {
     ensureIndexAndMappingExists(extension.config.snapshotType, Seq(
       field name "persistenceId" withType StringType index NotAnalyzed,
       field name "sequenceNumber" withType LongType,

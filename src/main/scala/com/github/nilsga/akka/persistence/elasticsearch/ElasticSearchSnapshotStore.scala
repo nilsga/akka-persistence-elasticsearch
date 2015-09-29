@@ -15,10 +15,10 @@ import org.elasticsearch.search.sort.SortOrder
 import scala.collection.JavaConversions
 import scala.concurrent.{Future, Promise}
 
-class ElasticSearchSnapshotStore extends SnapshotStore {
+class ElasticsearchSnapshotStore extends SnapshotStore {
 
   import context._
-  implicit val extension = ElasticSearchPersistenceExtension(system)
+  implicit val extension = ElasticsearchPersistenceExtension(system)
   val serializer = SerializationExtension(system)
   val esClient = extension.client
   val persistenceIndex = extension.config.index
