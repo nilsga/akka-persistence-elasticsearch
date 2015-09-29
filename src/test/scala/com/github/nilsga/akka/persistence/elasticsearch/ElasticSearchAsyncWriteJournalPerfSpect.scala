@@ -10,7 +10,7 @@ import com.typesafe.config.ConfigFactory
 import org.elasticsearch.common.settings.ImmutableSettings
 import scala.concurrent.duration._
 
-class ElasticSearchAsyncWriteJournalPerfSpect extends JournalPerfSpec(
+class ElasticsearchAsyncWriteJournalPerfSpect extends JournalPerfSpec(
     config = ConfigFactory.parseString(
       s"""
       akka {
@@ -28,10 +28,10 @@ class ElasticSearchAsyncWriteJournalPerfSpect extends JournalPerfSpec(
        }
 
        elasticsearch-journal {
-          class = "com.github.nilsga.akka.persistence.elasticsearch.ElasticSearchAsyncWriteJournal"
+          class = "com.github.nilsga.akka.persistence.elasticsearch.ElasticsearchAsyncWriteJournal"
        }
     """
-    )) with ElasticSearchSetup {
+    )) with ElasticsearchSetup {
 
   override def awaitDurationMillis: Long = 20.seconds.toMillis
 

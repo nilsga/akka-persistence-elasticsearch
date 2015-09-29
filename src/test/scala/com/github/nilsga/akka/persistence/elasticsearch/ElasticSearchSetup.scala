@@ -9,7 +9,7 @@ import org.elasticsearch.common.settings.ImmutableSettings
 import org.scalatest.{Suite, BeforeAndAfterAll}
 
 
-trait ElasticSearchSetup extends BeforeAndAfterAll { this: PluginSpec =>
+trait ElasticsearchSetup extends BeforeAndAfterAll { this: PluginSpec =>
 
   var esClient : ElasticClient = null
 

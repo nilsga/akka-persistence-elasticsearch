@@ -7,7 +7,7 @@ import com.typesafe.config.ConfigFactory
 
 import scala.collection.immutable.Seq
 
-class ElasticSearchSnapshotStoreSpec extends SnapshotStoreSpec(
+class ElasticsearchSnapshotStoreSpec extends SnapshotStoreSpec(
   config = ConfigFactory.parseString(
     s"""
       akka {
@@ -25,11 +25,10 @@ class ElasticSearchSnapshotStoreSpec extends SnapshotStoreSpec(
        }
 
        elasticsearch-snapshot-store {
-          class = "com.github.nilsga.akka.persistence.elasticsearch.ElasticSearchSnapshotStore"
+          class = "com.github.nilsga.akka.persistence.elasticsearch.ElasticsearchSnapshotStore"
        }
     """
-
-  )) with ElasticSearchSetup {
+  )) with ElasticsearchSetup {
 
   override def writeSnapshots(): Seq[SnapshotMetadata] = {
     val snaps = super.writeSnapshots()

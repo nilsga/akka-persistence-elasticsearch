@@ -13,8 +13,8 @@ import scala.concurrent.duration._
 import scala.concurrent.{Future, Promise}
 import scala.util.{Failure, Success}
 
-trait ElasticSearchAsyncRecovery extends AsyncRecovery with ActorLogging {
-  this : ElasticSearchAsyncWriteJournal =>
+trait ElasticsearchAsyncRecovery extends AsyncRecovery with ActorLogging {
+  this : ElasticsearchAsyncWriteJournal =>
 
   import context._
   implicit def scrollTimeout = Timeout(60 seconds)

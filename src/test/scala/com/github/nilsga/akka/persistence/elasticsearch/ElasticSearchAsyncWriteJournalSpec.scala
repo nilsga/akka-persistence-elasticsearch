@@ -5,7 +5,7 @@ import akka.persistence.journal.JournalSpec
 import com.sksamuel.elastic4s.ElasticDsl._
 import com.typesafe.config._
 
-class ElasticSearchAsyncWriteJournalSpec extends JournalSpec(
+class ElasticsearchAsyncWriteJournalSpec extends JournalSpec(
   config = ConfigFactory.parseString(
     s"""
       akka {
@@ -23,11 +23,10 @@ class ElasticSearchAsyncWriteJournalSpec extends JournalSpec(
        }
 
        elasticsearch-journal {
-          class = "com.github.nilsga.akka.persistence.elasticsearch.ElasticSearchAsyncWriteJournal"
+          class = "com.github.nilsga.akka.persistence.elasticsearch.ElasticsearchAsyncWriteJournal"
        }
     """
-
-  )) with ElasticSearchSetup {
+  )) with ElasticsearchSetup {
 
   override def writeMessages(fromSnr: Int, toSnr: Int, pid: String, sender: ActorRef, writerUuid: String): Unit = {
     super.writeMessages(fromSnr, toSnr, pid, sender, writerUuid)

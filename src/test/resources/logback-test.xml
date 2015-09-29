@@ -12,6 +12,6 @@
         <appender-ref ref="STDOUT" />
     </root>
 
-    <logger name="org.elasticsearch" level="INFO"/>
+    <logger name="org.elasticsearch" level="WARN"/>
 
 </configuration>
