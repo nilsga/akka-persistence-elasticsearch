@@ -4,9 +4,9 @@ name := "akka-persistence-elasticsearch"
 
 version := "1.0.2-SNAPSHOT"
 
-scalaVersion := "2.11.6"
+scalaVersion := "2.11.7"
 
-val akkaVersion = "2.4.0-RC3"
+val akkaVersion = "2.4.0"
 
 licenses += ("MIT", url("http://opensource.org/licenses/MIT"))
 
