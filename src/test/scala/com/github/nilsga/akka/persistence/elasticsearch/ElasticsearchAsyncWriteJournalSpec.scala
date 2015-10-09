@@ -28,6 +28,9 @@ class ElasticsearchAsyncWriteJournalSpec extends JournalSpec(
     """
   )) with ElasticsearchSetup {
 
+
+  override def supportsAtomicPersistAllOfSeveralEvents: Boolean = false
+
   override def writeMessages(fromSnr: Int, toSnr: Int, pid: String, sender: ActorRef, writerUuid: String): Unit = {
     super.writeMessages(fromSnr, toSnr, pid, sender, writerUuid)
     esClient.execute(refresh index "akkajournal").await

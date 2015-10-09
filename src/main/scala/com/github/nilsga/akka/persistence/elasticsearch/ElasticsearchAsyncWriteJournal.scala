@@ -8,6 +8,7 @@ import com.sksamuel.elastic4s._
 import com.sksamuel.elastic4s.streams.ReactiveElastic._
 import com.sksamuel.elastic4s.streams.RequestBuilder
 import org.elasticsearch.action.bulk.BulkResponse
+import org.elasticsearch.action.index.IndexResponse
 
 import scala.collection.immutable.Seq
 import scala.concurrent.duration._
@@ -28,25 +29,39 @@ class ElasticsearchAsyncWriteJournal extends AsyncWriteJournal with Elasticsearc
   val esClient = extension.client
 
   override def asyncWriteMessages(messages: Seq[AtomicWrite]): Future[Seq[Try[Unit]]] = {
-    val responses: Seq[Future[BulkResponse]] = messages.map(write => {
+    log.debug("Writing {}", messages)
+    val responses: Seq[Future[AnyRef]] = messages.map(write => {
       try {
-        val indexRequests = write.payload.map(pr => {
-          index into journalIndex / journalType id s"${pr.persistenceId}-${pr.sequenceNr}" fields(
-            "persistenceId" -> pr.persistenceId,
-            "sequenceNumber" -> pr.sequenceNr,
-            "message" -> serializer.serialize(pr).get
-            )
-        })
-        esClient execute bulk(indexRequests)
+        write.payload.size match {
+          case count if count > 1 =>
+            log.debug("Bulk write not supported for {}", write)
+            Future.failed(new UnsupportedOperationException)
+          case _ =>
+
+            val indexRequest = write.payload.map(pr => {
+              index into journalIndex / journalType id s"${pr.persistenceId}-${pr.sequenceNr}" fields(
+                "persistenceId" -> pr.persistenceId,
+                "sequenceNumber" -> pr.sequenceNr,
+                "message" -> serializer.serialize(pr).get
+                )
+            }).head
+            esClient execute indexRequest
+        }
       }
       catch {
         case NonFatal(ex) => Future.failed(ex)
       }
     })
 
-    Future.sequence(responses.map(_.map(bulkResponse => bulkResponse.hasFailures match {
-      case false => Success()
-      case true => Failure(new RuntimeException(bulkResponse.buildFailureMessage()))
+    Future.sequence(responses.map(_.map({
+      case indexResponse : IndexResponse =>
+        indexResponse.isCreated match {
+          case true => Success()
+          case false => Failure(new RuntimeException("Error persisting write"))
+        }
+      case ex : UnsupportedOperationException =>
+        Failure(ex)
+
     }).recover({
       case NonFatal(ex) => Failure(ex)
     })))
