@@ -1,6 +1,7 @@
 package com.github.nilsga.akka.persistence.elasticsearch
 
 import akka.actor.ActorRef
+import akka.persistence.CapabilityFlag
 import akka.persistence.journal.JournalSpec
 import com.sksamuel.elastic4s.ElasticDsl._
 import com.typesafe.config._
@@ -30,6 +31,7 @@ class ElasticsearchAsyncWriteJournalSpec extends JournalSpec(
 
 
   override def supportsAtomicPersistAllOfSeveralEvents: Boolean = false
+  override protected def supportsRejectingNonSerializableObjects: CapabilityFlag = true
 
   override def writeMessages(fromSnr: Int, toSnr: Int, pid: String, sender: ActorRef, writerUuid: String): Unit = {
     super.writeMessages(fromSnr, toSnr, pid, sender, writerUuid)

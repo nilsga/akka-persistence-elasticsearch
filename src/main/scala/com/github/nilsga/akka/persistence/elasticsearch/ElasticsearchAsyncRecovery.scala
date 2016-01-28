@@ -51,6 +51,7 @@ trait ElasticsearchAsyncRecovery extends AsyncRecovery with ActorLogging {
         filteredQuery filter {
           and(
             termFilter("persistenceId", persistenceId),
+            termFilter("deleted", false),
             rangeFilter("sequenceNumber") gte fromSequenceNr.toString lte end.toString
           )
         }

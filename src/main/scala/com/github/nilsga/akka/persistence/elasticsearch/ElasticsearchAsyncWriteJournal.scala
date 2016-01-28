@@ -42,7 +42,8 @@ class ElasticsearchAsyncWriteJournal extends AsyncWriteJournal with Elasticsearc
               index into journalIndex / journalType id s"${pr.persistenceId}-${pr.sequenceNr}" fields(
                 "persistenceId" -> pr.persistenceId,
                 "sequenceNumber" -> pr.sequenceNr,
-                "message" -> serializer.serialize(pr).get
+                "message" -> serializer.serialize(pr).get,
+                "deleted" -> false
                 )
             }).head
             esClient execute indexRequest
@@ -81,7 +82,7 @@ class ElasticsearchAsyncWriteJournal extends AsyncWriteJournal with Elasticsearc
 
     val reqBuilder = new RequestBuilder[RichSearchHit] {
       override def request(t: RichSearchHit): BulkCompatibleDefinition = {
-        delete id t.id from journalIndex / journalType
+        update id t.id in journalIndex / journalType doc "deleted" -> true
       }
     }
 

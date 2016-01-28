@@ -6,7 +6,7 @@ version := "1.0.3-SNAPSHOT"
 
 scalaVersion := "2.11.7"
 
-val akkaVersion = "2.4.0"
+val akkaVersion = "2.4.1"
 
 licenses += ("MIT", url("http://opensource.org/licenses/MIT"))
 

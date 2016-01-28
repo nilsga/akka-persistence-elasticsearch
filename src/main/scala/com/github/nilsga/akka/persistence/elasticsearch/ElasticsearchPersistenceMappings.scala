@@ -2,7 +2,7 @@ package com.github.nilsga.akka.persistence.elasticsearch
 
 import com.sksamuel.elastic4s.ElasticDsl._
 import com.sksamuel.elastic4s.mappings.DynamicMapping.Strict
-import com.sksamuel.elastic4s.mappings.FieldType.{LongType, StringType}
+import com.sksamuel.elastic4s.mappings.FieldType.{BooleanType, LongType, StringType}
 import com.sksamuel.elastic4s.mappings.TypedFieldDefinition
 
 import scala.concurrent.Future
@@ -27,7 +27,8 @@ object ElasticsearchPersistenceMappings {
     ensureIndexAndMappingExists(extension.config.journalType, Seq(
       field name "persistenceId" withType StringType index NotAnalyzed,
       field name "sequenceNumber" withType LongType,
-      field name "message" withType StringType index NotAnalyzed
+      field name "message" withType StringType index NotAnalyzed,
+      field name "deleted" withType BooleanType
     ))
   }
 
