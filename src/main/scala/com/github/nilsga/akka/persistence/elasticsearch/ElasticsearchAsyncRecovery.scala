@@ -58,15 +58,9 @@ trait ElasticsearchAsyncRecovery extends AsyncRecovery with ActorLogging {
       } sourceInclude "message" scroll "1m"
 
       val scroll = system.actorOf(ScrollActor.mkProps(esClient))
-      val promise = Promise[Unit]
-      (scroll ? Execute(query)).mapTo[List[PersistentRepr]].onComplete {
-        case Success(result) =>
-          result.sortWith((r1, r2) => r1.sequenceNr < r2.sequenceNr).foreach(replayCallback)
-          promise.success()
-        case Failure(ex) =>
-          promise.failure(ex)
+      (scroll ? Execute(query)).mapTo[List[PersistentRepr]].map {
+          _.sortWith((r1, r2) => r1.sequenceNr < r2.sequenceNr).foreach(replayCallback)
       }
-      promise.future
     })
   }
 }
